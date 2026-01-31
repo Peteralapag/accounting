@@ -12,15 +12,30 @@ use App\Models\Branch;
 class PurchaseBillsController extends Controller
 {
     // Show all bills
-    public function index()
+    public function index(Request $request)
     {
-        // Load all bills with related receipt -> PO -> Supplier
+        $search = $request->input('search');
+
         $bills = PurchaseBill::with(['receipt.purchaseOrder.supplier'])
+            ->when($search, function ($query, $search) {
+                $query->where('bill_no', 'like', "%{$search}%")
+                    ->orWhereHas('receipt', function ($q) use ($search) {
+                        $q->where('receipt_no', 'like', "%{$search}%")
+                        ->orWhereHas('purchaseOrder', function ($po) use ($search) {
+                            $po->where('po_number', 'like', "%{$search}%")
+                                ->orWhereHas('supplier', function ($s) use ($search) {
+                                    $s->where('name', 'like', "%{$search}%");
+                                });
+                        });
+                    });
+            })
             ->orderBy('bill_date', 'desc')
-            ->get();
+            ->paginate(10);
 
         return view('purchase_bills.index', compact('bills'));
     }
+
+
 
     // Show a single receipt to create a bill
     public function show($id)

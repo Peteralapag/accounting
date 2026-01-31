@@ -39,6 +39,15 @@ class PayBillsController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'bill_id'        => 'required|exists:purchase_bills,id',
+            'amount_paid'    => 'required|numeric|min:0.01',
+            'payment_date'   => 'required|date',
+            'payment_method' => 'required|in:Cash,Bank Transfer,PDC',
+            'pdc_number'     => 'nullable|string|max:50',
+            'payment_account'=> 'nullable|string|max:100',
+        ]);
+
         DB::beginTransaction();
 
         try {
@@ -51,7 +60,7 @@ class PayBillsController extends Controller
                 throw new \Exception('Payment exceeds remaining balance');
             }
 
-            PurchaseBillPayment::create([
+            $paymentData = [
                 'bill_id'               => $bill->id,
                 'payment_date'          => $request->payment_date,
                 'payment_account'       => $request->payment_account,
@@ -61,7 +70,14 @@ class PayBillsController extends Controller
                 'balance_after_payment' => $balance,
                 'status'                => $balance == 0 ? 'PAID' : 'PARTIAL',
                 'remarks'               => $request->remarks,
-            ]);
+            ];
+
+            // If PDC, include check number
+            if($request->payment_method === 'PDC'){
+                $paymentData['pdc_number'] = $request->pdc_number;
+            }
+
+            PurchaseBillPayment::create($paymentData);
 
             $bill->paid_amount = $newPaid;
             $bill->status      = $balance == 0 ? 'PAID' : 'PARTIAL';
@@ -69,11 +85,21 @@ class PayBillsController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Payment posted successfully');
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment posted successfully'
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
     }
+
+    
+
+
 }

@@ -43,6 +43,8 @@ Route::middleware(['auth'])->prefix('purchase_bills')->group(function() {
     Route::get('/view/{bill}', [PurchaseBillsController::class, 'show'])->name('purchase_bills.show');
     Route::get('/showpb/{id}', [PurchaseBillsController::class, 'showpb'])->name('purchase_bills.showpb');
     Route::post('/approve/{bill}', [BillApprovalController::class, 'approve'])->name('bill_approval.approve');
+
+    Route::get('/datatable', [PurchaseBillsController::class, 'datatable'])->name('purchase_bills.datatable');
 });
 
 // Pay Bills

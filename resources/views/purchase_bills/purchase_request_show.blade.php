@@ -4,12 +4,26 @@
 
 @section('content')
 
+@push('styles')
+<style>
+    .info-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+    .info-value {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+</style>
+@endpush
+
 @php
     $terms = $receipt->purchaseOrder->supplier->payment_terms ?? null;
     $dueDate = null;
 
     if($terms && isset($receipt->received_date)) {
-        // Extract number from terms like NET30, NET15
         preg_match('/\d+/', $terms, $matches);
         if(!empty($matches)) {
             $days = (int) $matches[0];
@@ -18,48 +32,92 @@
     }
 @endphp
 
-{{-- Bootstrap Alerts --}}
+{{-- Alerts --}}
 @if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-{{ session('success') }}
-<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-success alert-dismissible fade show">
+    {{ session('success') }}
+    <button class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 
 @if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-{{ session('error') }}
-<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="alert alert-danger alert-dismissible fade show">
+    {{ session('error') }}
+    <button class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
 
-
-
-<div class="container-fluid mt-4">
+<div class="container py-4">
 
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold">Receipt Details</h4>
-        <a href="{{ route('purchase_bills.create') }}" class="btn btn-outline-primary btn-sm">
+        <h3 class="fw-bold text-primary">Receipt Details</h3>
+        <a href="{{ route('purchase_bills.create') }}" class="btn btn-outline-primary btn-sm shadow-sm">
             <i class="bi bi-arrow-left me-1"></i> Back to Receipts
         </a>
     </div>
 
-    <!-- Receipt Info -->
-    <div class="row mb-4">
+    <div class="row g-4 mb-4">
+
+        <!-- Receipt Information -->
         <div class="col-lg-6">
-            <div class="card shadow-sm border-primary">
-                <div class="card-header bg-primary text-white fw-bold">Receipt Information</div>
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-primary text-white fw-bold">
+                    Receipt Information
+                </div>
                 <div class="card-body">
-                    <p><strong>Receipt No:</strong> {{ $receipt->receipt_no }}</p>
-                    <p><strong>PO Number:</strong> {{ $receipt->purchaseOrder->po_number ?? 'N/A' }}</p>
-                    <p><strong>Received Date:</strong> {{ $receipt->received_date->format('Y-m-d') }}</p>
-                    <p><strong>Branch:</strong> {{ $receipt->branch }}</p>
-                    <p><strong>Received By:</strong> {{ $receipt->received_by }}</p>
-                    <p><strong>Supplier:</strong> {{ $receipt->purchaseOrder->supplier->name ?? 'N/A' }}</p>
-                    <p><strong>Terms:</strong> {{ $terms ?? '-' }}</p>
-                    <p><strong>Due Date:</strong> {{ $dueDate ? $dueDate->format('M j, Y') : '-' }}</p>
-                    <p><strong>Remarks:</strong> {{ $receipt->purchaseOrder->remarks ?? '-' }}</p>
+
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <div class="info-label">Receipt No</div>
+                            <div class="info-value">{{ $receipt->receipt_no }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">PO Number</div>
+                            <div class="info-value">{{ $receipt->purchaseOrder->po_number ?? '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <div class="info-label">Received Date</div>
+                            <div class="info-value">{{ $receipt->received_date->format('M d, Y') }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Due Date</div>
+                            <div class="info-value">{{ $dueDate ? $dueDate->format('M d, Y') : '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <div class="info-label">Branch</div>
+                            <div class="info-value">{{ $receipt->branch }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Received By</div>
+                            <div class="info-value">{{ $receipt->received_by }}</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <div class="info-label">Supplier</div>
+                            <div class="info-value">{{ $receipt->purchaseOrder->supplier->name ?? '-' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Payment Terms</div>
+                            <div class="info-value">{{ $terms ?? '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 border rounded bg-light px-3 py-2">
+                        <div class="info-label mb-1">Remarks / Invoice No</div>
+                        <div class="info-value">
+                            {{ $receipt->remarks ?? '-' }}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -69,58 +127,82 @@
             @php
                 $total = $receipt->items->sum('amount');
                 $taxType = $receipt->purchaseOrder->supplier->tax_type ?? 'Non-VAT';
-                $vatrate = $receipt->purchaseOrder->supplier->vat_rate ?? 0;
-                $withholdingrate = $receipt->purchaseOrder->supplier->withholding_rate ?? 0;
+                $vatRate = $receipt->purchaseOrder->supplier->vat_rate ?? 0;
+                $withholdingRate = $receipt->purchaseOrder->supplier->withholding_rate ?? 0;
 
                 $vatAmount = 0;
                 $withholdingAmount = 0;
                 $grandTotal = $total;
 
-                if($taxType == 'VAT') { 
-                    $vatAmount = $total * $vatrate; 
+                if($taxType == 'VAT') {
+                    $vatAmount = $total * $vatRate;
                     $grandTotal -= $vatAmount;
                 }
-                if($taxType == 'Withholding') { 
-                    $withholdingAmount = $total * $withholdingrate; 
+                if($taxType == 'Withholding') {
+                    $withholdingAmount = $total * $withholdingRate;
                     $grandTotal -= $withholdingAmount;
                 }
             @endphp
-            <div class="card shadow-sm border-info">
-                <div class="card-header bg-info text-white fw-bold">Tax & Total</div>
+
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-info text-white fw-bold">
+                    Tax & Total
+                </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Tax Type:</span>
-                        <span class="fw-bold">{{ $taxType }}</span>
+
+                    <div class="mb-3">
+                        <div class="info-label">Tax Type</div>
+                        <span class="badge
+                            @if($taxType=='VAT') bg-warning
+                            @elseif($taxType=='Withholding') bg-danger
+                            @else bg-secondary
+                            @endif">
+                            {{ $taxType }}
+                        </span>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>VAT Amount:</span>
-                        <span class="fw-bold text-warning">{{ number_format($vatAmount,2) }}</span>
+
+                    <div class="border rounded p-3 mb-3 bg-warning bg-opacity-10">
+                        <div class="info-label">VAT ({{ number_format($vatRate * 100,2) }}%)</div>
+                        <div class="info-value text-warning">
+                            {{ $vatAmount ? number_format($vatAmount,2) : '-' }}
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Withholding Amount:</span>
-                        <span class="fw-bold text-danger">{{ number_format($withholdingAmount,2) }}</span>
+
+                    <div class="border rounded p-3 mb-3 bg-danger bg-opacity-10">
+                        <div class="info-label">Withholding ({{ number_format($withholdingRate * 100,2) }}%)</div>
+                        <div class="info-value text-danger">
+                            {{ $withholdingAmount ? number_format($withholdingAmount,2) : '-' }}
+                        </div>
                     </div>
+
                     <hr>
-                    <div class="d-flex justify-content-between">
-                        <span class="fw-bold">Total to Pay:</span>
-                        <span class="fw-bold text-success fs-5">{{ number_format($grandTotal,2) }}</span>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold fs-5">Total to Pay</span>
+                        <span class="fw-bold fs-4 text-success">
+                            {{ number_format($grandTotal,2) }}
+                        </span>
                     </div>
+
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- Items Table -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-secondary text-white fw-bold">Items Received</div>
+    <!-- Items -->
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-header bg-secondary text-white fw-bold">
+            Items Received
+        </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-bordered mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover table-bordered mb-0 align-middle">
+                    <thead class="table-light text-center">
                         <tr>
                             <th>#</th>
                             <th>Item Description</th>
-                            <th class="text-end">Qty Received</th>
+                            <th class="text-end">Qty</th>
                             <th class="text-end">Unit Price</th>
                             <th class="text-end">Amount</th>
                         </tr>
@@ -128,23 +210,27 @@
                     <tbody>
                         @forelse($receipt->items as $index => $item)
                         <tr>
-                            <td>{{ $index + 1 }}</td>
+                            <td class="text-center">{{ $index + 1 }}</td>
                             <td>{{ $item->poItem->description ?? 'N/A' }}</td>
                             <td class="text-end">{{ $item->received_qty }}</td>
                             <td class="text-end">{{ number_format($item->unit_price,2) }}</td>
-                            <td class="text-end">{{ number_format($item->amount,2) }}</td>
+                            <td class="text-end fw-bold">{{ number_format($item->amount,2) }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted">No items found for this receipt.</td>
+                            <td colspan="5" class="text-center text-muted py-3">
+                                No items found for this receipt.
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>
                     @if($receipt->items->count())
                     <tfoot class="table-light">
                         <tr>
-                            <th colspan="4" class="text-end">Total:</th>
-                            <th class="text-end">{{ number_format($receipt->items->sum('amount'),2) }}</th>
+                            <th colspan="4" class="text-end">Total</th>
+                            <th class="text-end fw-bold">
+                                {{ number_format($receipt->items->sum('amount'),2) }}
+                            </th>
                         </tr>
                     </tfoot>
                     @endif
@@ -153,39 +239,16 @@
         </div>
     </div>
 
-    <!-- Create Bill Button -->
-    <div class="d-flex justify-content-end mb-4">
+    <!-- Create Bill -->
+    <div class="d-flex justify-content-end">
         <form id="create-bill-form" action="{{ route('purchase_bills.store') }}" method="POST">
             @csrf
             <input type="hidden" name="receipt_id" value="{{ $receipt->id }}">
-            <button type="submit" class="btn btn-success btn-sm fw-bold">
+            <button class="btn btn-success btn-sm fw-bold shadow-sm">
                 <i class="bi bi-file-earmark-plus me-2"></i> Create Bill
             </button>
         </form>
     </div>
 
 </div>
-@endsection
-
-@section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.getElementById('create-bill-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        Swal.fire({
-            title: 'Create Bill?',
-            text: "Are you sure you want to create a bill for this receipt?",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, Create',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.submit();
-            }
-        });
-    });
-</script>
 @endsection
