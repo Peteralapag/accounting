@@ -13,6 +13,7 @@ class PurchaseBillPayment extends Model
         'payment_date',
         'payment_account',
         'payment_method',
+        'pdc_number', // add this
         'reference_no',
         'amount_paid',
         'balance_after_payment',
@@ -20,8 +21,11 @@ class PurchaseBillPayment extends Model
         'remarks',
     ];
 
+
     protected $casts = [
         'payment_date' => 'datetime:Y-m-d',
+        'amount_paid' => 'decimal:2',
+        'balance_after_payment' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

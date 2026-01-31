@@ -15,13 +15,18 @@ class PayBillsController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PurchaseBill::where('status', 'POSTED');
+        $query = PurchaseBill::where('status', 'POSTED')
+            ->with([
+                'receipt.purchaseOrder.supplier',
+                'items',
+                'payments'
+            ]);
 
         if ($request->date_from && $request->date_to) {
-
             $dateFrom = Carbon::parse($request->date_from);
             $dateTo   = Carbon::parse($request->date_to);
 
+            // Max range 31 days
             if ($dateFrom->diffInDays($dateTo) > 31) {
                 $dateTo = $dateFrom->copy()->addDays(31);
             }
@@ -29,7 +34,52 @@ class PayBillsController extends Controller
             $query->whereBetween('bill_date', [$dateFrom, $dateTo]);
         }
 
-        $bills = $query->get();
+        $bills = $query->get()->map(function($bill){
+            $totalPaid = $bill->payments->sum('amount_paid');
+            $balance = ($bill->total_amount ?? 0) - $totalPaid;
+
+            return [
+                'id' => $bill->id,
+                'bill_no' => $bill->bill_no ?? '-',
+                'bill_date' => $bill->bill_date ?? '-',
+                'due_date' => $bill->due_date ?? '-',
+                'status' => $balance <= 0 ? 'PAID' : 'POSTED',
+                'total_amount' => $bill->total_amount ?? 0,
+                'paid_amount' => $totalPaid,
+                'balance' => $balance,
+                'receipt' => [
+                    'purchaseOrder' => [
+                        'supplier' => [
+                            'name' => optional($bill->receipt?->purchaseOrder?->supplier)->name ?? '-'
+                        ]
+                    ]
+                ],
+                'items' => $bill->items->map(function($item){
+                    return [
+                        'id'=>$item->id,
+                        'receipt_item_id'=>$item->receipt_item_id ?? '-',
+                        'qty'=>$item->qty ?? 0,
+                        'unit_price'=>$item->unit_price ?? 0,
+                        'amount'=>$item->amount ?? 0
+                    ];
+                }),
+                'payments' => $bill->payments->map(function($p){
+                    return [
+                        'id' => $p->id,
+                        'payment_date'=>$p->payment_date ?? '-',
+                        'payment_method'=>$p->payment_method ?? '-',
+                        'payment_account'=>$p->payment_account ?? '-',
+                        'reference_no'=>$p->reference_no ?? '-',
+                        'amount_paid'=>$p->amount_paid ?? 0,
+                        'balance_after_payment'=>$p->balance_after_payment ?? 0,
+                        'status'=>$p->status ?? '-'
+                    ];
+                })
+            ];
+        })
+        ->filter(fn($bill) => $bill['balance'] > 0) // <-- **hide fully paid bills**
+        ->values();
+
 
         return view('pay_bills.index', compact('bills'));
     }
@@ -51,15 +101,19 @@ class PayBillsController extends Controller
         DB::beginTransaction();
 
         try {
+            // Lock the bill row
             $bill = PurchaseBill::lockForUpdate()->findOrFail($request->bill_id);
 
-            $newPaid = $bill->paid_amount + $request->amount_paid;
-            $balance = $bill->total_amount - $newPaid;
+            // Calculate balance dynamically
+            $totalPaid = $bill->payments()->sum('amount_paid');
+            $newTotalPaid = $totalPaid + $request->amount_paid;
+            $balance = ($bill->total_amount ?? 0) - $newTotalPaid;
 
             if ($balance < 0) {
                 throw new \Exception('Payment exceeds remaining balance');
             }
 
+            // Create payment
             $paymentData = [
                 'bill_id'               => $bill->id,
                 'payment_date'          => $request->payment_date,
@@ -72,34 +126,54 @@ class PayBillsController extends Controller
                 'remarks'               => $request->remarks,
             ];
 
-            // If PDC, include check number
             if($request->payment_method === 'PDC'){
                 $paymentData['pdc_number'] = $request->pdc_number;
             }
 
-            PurchaseBillPayment::create($paymentData);
+            $payment = PurchaseBillPayment::create($paymentData);
 
-            $bill->paid_amount = $newPaid;
-            $bill->status      = $balance == 0 ? 'PAID' : 'PARTIAL';
+            // Update bill status only
+            $bill->status = $balance == 0 ? 'PAID' : 'POSTED';
+            $bill->balance = $balance; // optional, but can keep for quick access
             $bill->save();
 
             DB::commit();
 
+            // Return updated bill info for live modal update
+            $updatedBill = [
+                'id' => $bill->id,
+                'total_amount' => $bill->total_amount,
+                'paid_amount' => $bill->paid_amount,
+                'balance' => $bill->balance,
+                'status' => $bill->status,
+                'payments' => $bill->payments()->orderBy('created_at')->get()->map(function($p){
+                    return [
+                        'id' => $p->id,
+                        'payment_date' => $p->payment_date,
+                        'payment_method' => $p->payment_method,
+                        'payment_account' => $p->payment_account,
+                        'reference_no' => $p->reference_no,
+                        'amount_paid' => $p->amount_paid,
+                        'balance_after_payment' => $p->balance_after_payment,
+                        'status' => $p->status
+                    ];
+                }),
+            ];
+
+
             return response()->json([
-                'success' => true,
-                'message' => 'Payment posted successfully'
+                'success'=>true,
+                'message'=>'Payment posted successfully',
+                'bill'=>$updatedBill,
+                'latest_payment_id'=>$payment->id
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Exception $e){
             DB::rollBack();
             return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
+                'success'=>false,
+                'message'=>$e->getMessage()
             ]);
         }
     }
-
-    
-
-
 }

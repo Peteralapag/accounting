@@ -24,6 +24,7 @@ class PurchaseBill extends Model
         'approval_status',
         'approved_at',
         'approved_by',
+        // New columns can be added here if any in future without breaking old code
     ];
 
     protected $casts = [

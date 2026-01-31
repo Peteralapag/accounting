@@ -10,7 +10,13 @@ class PurchaseBillItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'bill_id', 'receipt_item_id', 'qty', 'unit_price', 'amount', 'remarks'
+        'bill_id',
+        'receipt_item_id',
+        'qty',
+        'unit_price',
+        'amount',
+        'remarks',
+        // add more future columns here safely
     ];
 
     public function bill()
@@ -23,16 +29,15 @@ class PurchaseBillItem extends Model
         return $this->belongsTo(PurchaseReceiptItem::class, 'receipt_item_id');
     }
 
-    /// app/Models/PurchaseBillItem.php
     public function purchaseOrderItem()
     {
         return $this->hasOneThrough(
             PurchaseOrderItem::class,      // Final model
             PurchaseReceiptItem::class,    // Intermediate model
-            'id',                          // Foreign key on intermediate model? (receipt_item.id)
-            'id',                          // Foreign key on final model? (purchase_order_items.id)
+            'id',                          // Foreign key on intermediate model
+            'id',                          // Foreign key on final model
             'receipt_item_id',             // Local key on PurchaseBillItem
-            'po_item_id'                   // Local key on PurchaseReceiptItem (this links to purchase_order_items.id)
+            'po_item_id'                   // Local key on PurchaseReceiptItem
         );
     }
 }

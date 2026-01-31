@@ -128,7 +128,7 @@
     <div class="card-body">
         @php
             $total = $bill->items->sum('amount');
-            $taxType = $bill->receipt->purchaseOrder->supplier->tax_type ?? 'Non-VAT';
+            $taxType = $bill->tax_type ?? 'Non-VAT';
             $vatrate = $bill->receipt->purchaseOrder->supplier->vat_rate ?? 0;
             $withholdingrate = $bill->receipt->purchaseOrder->supplier->withholding_rate ?? 0;
 
