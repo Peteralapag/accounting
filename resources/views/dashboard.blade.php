@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="container-fluid flow-container mt-4">
+<div class="container-fluid flow-container mt-4" style="font-size: 0.7rem;">
 	<div class="row">
 		<div class="col-9">
 		
@@ -264,9 +264,6 @@
 						<div class="col-md-12"></div>
 						<div class="col-md-12"></div>
 						<div class="col-md-12"></div>
-						<div class="col-md-12"></div>
-                        <div class="col-md-12"></div>
-                        <div class="col-md-12"></div>
 						
 						<div class="col-md-6">
 							<div class="card text-center hover-shadow cursor-pointer" id="recordsdeposit">

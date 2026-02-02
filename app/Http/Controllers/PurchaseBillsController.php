@@ -17,6 +17,7 @@ class PurchaseBillsController extends Controller
         $search = $request->input('search');
 
         $bills = PurchaseBill::with(['receipt.purchaseOrder.supplier'])
+            ->where('status', '=', 'draft')
             ->when($search, function ($query, $search) {
                 $query->where('bill_no', 'like', "%{$search}%")
                     ->orWhereHas('receipt', function ($q) use ($search) {

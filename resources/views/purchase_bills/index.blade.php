@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold text-primary">Enter Bills</h3>
         <a href="{{ route('purchase_bills.create') }}" class="btn btn-success btn-sm shadow-sm">
-            <i class="bi bi-file-earmark-plus me-1"></i> Create Bill
+            <i class="bi bi-file-earmark-plus me-1"></i> Create A/P Invoice
         </a>
     </div>
 

@@ -28,10 +28,27 @@
         border-right: 1px solid #dee2e6;
         padding: 1rem;
         z-index: 1040;
+        font-size: 0.9rem;
 
-        overflow-y: auto; /* enable vertical scrolling */
+        overflow-y: auto;
         overscroll-behavior: contain;
     }
+    /* Sidebar links */
+    #sidebar ul.nav-link a {
+        display: block;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+    #sidebar ul.nav-link a:hover {
+        background-color: #e7f1ff;
+    }
+    #sidebar ul.nav-link a.active {
+        background-color: #0d6efd;
+        color: #fff !important;
+    }
+
 
     /* Content wrapper */
     #contentWrapper {
@@ -49,21 +66,7 @@
         margin-right: 0.5rem;
     }
 
-    /* Sidebar links */
-    #sidebar ul.nav-link a {
-        display: block;
-        padding: 0.5rem 1rem;
-        border-radius: 0.375rem;
-        color: #0d6efd;
-        text-decoration: none;
-    }
-    #sidebar ul.nav-link a:hover {
-        background-color: #e7f1ff;
-    }
-    #sidebar ul.nav-link a.active {
-        background-color: #0d6efd;
-        color: #fff !important;
-    }
+    
     </style>
 
 </head>
@@ -96,28 +99,100 @@
 
     {{-- Sidebar --}}
     <div id="sidebar">
-        <h6 class="text-secondary mb-3">REPORTS</h6>
+        <h6 class="text-secondary mb-3">MENU</h6>
         <ul class="nav flex-column nav-link">
+
+            <!-- Dashboard -->
             <li>
                 <a href="{{ url('/') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <i class="bi bi-speedometer2 me-2"></i>
-                    Dashboard
+                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 </a>
             </li>
-            <li><a href="{{ url('/brrr-expense') }}" class="{{ request()->is('brrr-expense') ? 'active' : '' }}">Expenses</a></li>
-            <li><a href="{{ url('/brrr-overhead') }}" class="{{ request()->is('brrr-overhead') ? 'active' : '' }}">Overhead</a></li>
-            <li><a href="{{ url('/cogs-report') }}" class="{{ request()->is('cogs-report') ? 'active' : '' }}">COGS Report</a></li>
-            <li><a href="{{ url('/sales-report') }}" class="{{ request()->is('sales-report') ? 'active' : '' }}">Sales Report</a></li>
-            <li><a href="{{ url('/brrr-summary') }}" class="{{ request()->is('brrr-summary') ? 'active' : '' }}">BRRR Summary</a></li>
-            <li><a href="{{ url('/brrr-expense') }}" class="{{ request()->is('brrr-expense') ? 'active' : '' }}">Expenses</a></li>
-            <li><a href="{{ url('/brrr-overhead') }}" class="{{ request()->is('brrr-overhead') ? 'active' : '' }}">Overhead</a></li>
-            <li><a href="{{ url('/cogs-report') }}" class="{{ request()->is('cogs-report') ? 'active' : '' }}">COGS Report</a></li>
-            <li><a href="{{ url('/sales-report') }}" class="{{ request()->is('sales-report') ? 'active' : '' }}">Sales Report</a></li>
-            <li><a href="{{ url('/brrr-summary') }}" class="{{ request()->is('brrr-summary') ? 'active' : '' }}">BRRR Summary</a></li>
-            <li><a href="{{ url('/brrr-expense') }}" class="{{ request()->is('brrr-expense') ? 'active' : '' }}">Expenses</a></li>
-            <li><a href="{{ url('/brrr-overhead') }}" class="{{ request()->is('brrr-overhead') ? 'active' : '' }}">Overhead</a></li>
+
+            <!-- Transactions -->
+            <li class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center collapsed"
+                data-bs-toggle="collapse" href="#transactionsMenu" role="button" aria-expanded="false">
+                    <span><i class="bi bi-journal-check me-2"></i> Transactions</span>
+                    <i class="bi bi-chevron-down small"></i>
+                </a>
+                <div class="collapse ps-3" id="transactionsMenu">
+                    <a href="{{ url('/bank-reconciliation') }}" class="nav-link {{ request()->is('bank-reconciliation') ? 'active' : '' }}">
+                        Bank Reconciliation
+                    </a>
+                    <a href="{{ url('/journal-voucher') }}" class="nav-link {{ request()->is('journal-voucher') ? 'active' : '' }}">
+                        Journal Voucher
+                    </a>
+                    <a href="{{ url('/payment-voucher') }}" class="nav-link {{ request()->is('payment-voucher') ? 'active' : '' }}">
+                        Payment Voucher
+                    </a>
+                    <a href="{{ url('/receipt-voucher') }}" class="nav-link {{ request()->is('receipt-voucher') ? 'active' : '' }}">
+                        Receipt Voucher
+                    </a>
+                </div>
+            </li>
+
+            <!-- Financial Statements -->
+            <li class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center collapsed"
+                data-bs-toggle="collapse" href="#fsMenu" role="button" aria-expanded="false">
+                    <span><i class="bi bi-file-earmark-bar-graph me-2"></i> Financial Statements</span>
+                    <i class="bi bi-chevron-down small"></i>
+                </a>
+                <div class="collapse ps-3" id="fsMenu">
+                    <a href="{{ url('/balance-sheet') }}" class="nav-link {{ request()->is('balance-sheet') ? 'active' : '' }}">
+                        Balance Sheet
+                    </a>
+                    <a href="{{ url('/profit-loss') }}" class="nav-link {{ request()->is('profit-loss') ? 'active' : '' }}">
+                        Profit & Loss
+                    </a>
+                    <a href="{{ url('/chart-of-accounts') }}" class="nav-link {{ request()->is('chart-of-accounts') ? 'active' : '' }}">
+                        Chart of Accounts
+                    </a>
+                </div>
+            </li>
+
+            <!-- Reports -->
+            <li class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center collapsed"
+                data-bs-toggle="collapse" href="#reportsMenu" role="button" aria-expanded="false">
+                    <span><i class="bi bi-clipboard-data me-2"></i> Reports</span>
+                    <i class="bi bi-chevron-down small"></i>
+                </a>
+                <div class="collapse ps-3" id="reportsMenu">
+                    <a href="{{ url('/account-ledger-report') }}" class="nav-link {{ request()->is('account-ledger-report') ? 'active' : '' }}">
+                        Account Ledger Report
+                    </a>
+                    <a href="{{ url('/payment-report') }}" class="nav-link {{ request()->is('payment-report') ? 'active' : '' }}">
+                        Payment Report
+                    </a>
+                    <a href="{{ url('/receipt-report') }}" class="nav-link {{ request()->is('receipt-report') ? 'active' : '' }}">
+                        Receipt Report
+                    </a>
+                    <a href="{{ url('/journal-report') }}" class="nav-link {{ request()->is('journal-report') ? 'active' : '' }}">
+                        Journal Report
+                    </a>
+                    <a href="{{ url('/purchase-invoice-report') }}" class="nav-link {{ request()->is('purchase-invoice-report') ? 'active' : '' }}">
+                        Purchase Invoice Report
+                    </a>
+                    <a href="{{ url('/purchase-return-report') }}" class="nav-link {{ request()->is('purchase-return-report') ? 'active' : '' }}">
+                        Purchase Return Report
+                    </a>
+                    <a href="{{ url('/sales-invoice-report') }}" class="nav-link {{ request()->is('sales-invoice-report') ? 'active' : '' }}">
+                        Sales Invoice Report
+                    </a>
+                    <a href="{{ url('/sales-return-report') }}" class="nav-link {{ request()->is('sales-return-report') ? 'active' : '' }}">
+                        Sales Return
+                    </a>
+                    <a href="{{ url('/stock-report') }}" class="nav-link {{ request()->is('stock-report') ? 'active' : '' }}">
+                        Stock Report
+                    </a>
+                </div>
+            </li>
+
         </ul>
     </div>
+
 
     {{-- Main Content --}}
     <div id="contentWrapper">
