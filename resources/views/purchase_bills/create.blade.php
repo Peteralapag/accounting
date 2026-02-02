@@ -52,7 +52,8 @@
                             <th>PO Number</th>
                             <th>Received Date</th>
                             <th>Branch</th>
-                            <th>Status</th>
+                            <th>Aging</th>
+                            
                             <th class="text-center" width="160">Action</th>
                         </tr>
                     </thead>
@@ -72,9 +73,7 @@
                                 {{ $r->branch }}
                             </td>
                             <td>
-                                <span class="badge bg-success">
-                                    Confirmed
-                                </span>
+                                {{ $r->received_date ? intval($r->received_date->diffInDays(now())) . ' days' : 'N/A' }}
                             </td>
                             <td class="text-center">
                                 <a href="{{ route('purchase_bills.createFromReceipt', $r->id) }}"

@@ -132,12 +132,21 @@ class PurchaseBillsController extends Controller
         $grandTotal -= $withholdingAmount;
         }
 
+        $terms = $receipt->purchaseOrder->supplier->payment_terms ?? null;
+        $dueDate = now()->addDays(30); // fallback
+        if($terms) {
+            preg_match('/\d+/', $terms, $matches);
+            if(!empty($matches)) {
+                $dueDays = (int) $matches[0];
+                $dueDate = $receipt->received_date->copy()->addDays($dueDays);
+            }
+        }
 
         $bill = PurchaseBill::create([
         'receipt_id' => $receipt->id,
         'bill_no' => $billNo,
         'bill_date' => now()->toDateString(),
-        'due_date' => now()->addDays(30)->toDateString(),
+        'due_date' => $dueDate->toDateString(),
         'branch' => $receipt->branch,
         'remarks' => $receipt->remarks,
         'status' => 'draft',

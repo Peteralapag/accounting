@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\PurchaseBillSchedule;
 
 class PurchaseBill extends Model
 {
@@ -52,4 +53,10 @@ class PurchaseBill extends Model
     {
         return $this->hasMany(PurchaseBillPayment::class, 'bill_id');
     }
+    // Relation to payment schedules
+    public function schedules()
+    {
+        return $this->hasMany(PurchaseBillSchedule::class, 'bill_id');
+    }
+
 }

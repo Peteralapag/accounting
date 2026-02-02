@@ -38,9 +38,9 @@
                             <th>PO #</th>
                             <th>Supplier</th>
                             <th>Branch</th>
-                            <th>Bill Date</th>
                             <th>Due Date</th>
                             <th class="text-end">Total</th>
+                            <th>Aging</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -53,9 +53,11 @@
                             <td class="text-center">{{ $b->receipt->purchaseOrder->po_number ?? '-' }}</td>
                             <td>{{ $b->receipt->purchaseOrder->supplier->name ?? '-' }}</td>
                             <td>{{ $b->branch }}</td>
-                            <td class="text-center">{{ optional($b->bill_date)->format('Y-m-d') }}</td>
                             <td class="text-center">{{ optional($b->due_date)->format('Y-m-d') }}</td>
                             <td class="text-end fw-semibold">{{ number_format($b->total_amount, 2) }}</td>
+                            <td class="text-center">
+                                {{ $b->receipt->received_date ? intval($b->receipt->received_date->diffInDays(now())) . ' days' : 'N/A' }}
+                            </td>                                
                             <td class="text-center">
                                 @php
                                     $statusColor = match($b->status) {

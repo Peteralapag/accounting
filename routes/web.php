@@ -5,7 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PurchaseBillsController;
 use App\Http\Controllers\PayBillsController;
 use App\Http\Controllers\BillApprovalController;
-
+use App\Http\Controllers\PayBillsSchedulesController;
 
 
 Route::get('/login', function() {
@@ -47,8 +47,37 @@ Route::middleware(['auth'])->prefix('purchase_bills')->group(function() {
     Route::get('/datatable', [PurchaseBillsController::class, 'datatable'])->name('purchase_bills.datatable');
 });
 
-// Pay Bills
+// Pay Bills / A/P
+
 Route::middleware(['auth'])->prefix('pay_bills')->group(function () {
-    Route::get('/', [App\Http\Controllers\PayBillsController::class, 'index'])->name('pay_bills.index');
-    Route::post('/store', [App\Http\Controllers\PayBillsController::class, 'store'])->name('pay_bills.store');
+
+   
+    Route::get('/', [PayBillsController::class, 'index'])
+        ->name('pay_bills.index');
+
+    Route::post('/store-payment', [PayBillsController::class, 'storePayment'])
+        ->name('pay_bills.storePayment');
+
+
+    
+    Route::prefix('schedules')->group(function () {
+
+        // 1 Bills ready to be scheduled (AP Approved, no schedule yet)
+        Route::get('/create', [PayBillsSchedulesController::class, 'create'])
+            ->name('pay_bills.schedules.create');
+
+        // 2 Save created schedules
+        Route::post('/store', [PayBillsSchedulesController::class, 'store'])
+            ->name('pay_bills.schedules.store');
+
+        // 3 View schedules waiting for approval
+        Route::get('/', [PayBillsSchedulesController::class, 'index'])
+            ->name('pay_bills.schedules.index');
+
+        // 4 Approve schedule
+        Route::post('/{schedule}/approve', [PayBillsSchedulesController::class, 'approve'])
+            ->name('pay_bills.schedules.approve');
+    });
+
 });
+
