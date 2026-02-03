@@ -257,47 +257,67 @@
 @push('scripts')
 <script src="{{ asset('assets/js/sweetalert2.min.js') }}"></script>
 <script>
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('create-bill-form');
 
-    form.addEventListener('submit', function(e) {
-        e.preventDefault(); // prevent default submit
+    if(form){
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
 
-        Swal.fire({
-            title: 'Confirm Push to A/P?',
-            text: "This will create a draft purchase bill.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, push it!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                form.submit(); // submit if confirmed
-            }
+            Swal.fire({
+                title: 'Confirm Push to A/P?',
+                text: "This will create a draft purchase bill.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, push it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if(result.isConfirmed){
+                    const formData = new FormData(form);
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': formData.get('_token'),
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(async res => {
+                        if(!res.ok){
+                            const text = await res.text();
+                            throw new Error(text || 'Server error');
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if(data.success){
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Bill Created!',
+                                text: data.message || 'Successfully pushed to A/P',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = "{{ route('purchase_bills.index') }}";
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'Something went wrong!', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'Something went wrong!', 'error');
+                    });
+                }
+            });
         });
-    });
-
-    // SUCCESS ALERT AFTER REDIRECT
-    @if(session('success'))
-        Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: "{{ session('success') }}",
-            confirmButtonColor: '#28a745'
-        });
-    @endif
-
-    // ERROR ALERT AFTER REDIRECT
-    @if(session('error'))
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops!',
-            text: "{{ session('error') }}",
-            confirmButtonColor: '#dc3545'
-        });
-    @endif
+    }
 });
+
 </script>
 @endpush

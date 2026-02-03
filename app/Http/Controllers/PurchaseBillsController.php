@@ -234,8 +234,13 @@ class PurchaseBillsController extends Controller
             ]);
         }
 
-        return redirect()->route('purchase_bills.index')
-                        ->with('success', 'Purchase bill created successfully!');
+
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Draft Purchase Bill created successfully.',
+            'bill_id' => $bill->id
+        ]);              
     }
 
     
