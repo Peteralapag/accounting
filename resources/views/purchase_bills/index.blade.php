@@ -7,10 +7,53 @@
 
     {{-- HEADER --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold text-primary">Enter Bills</h3>
+        <h3 class="fw-bold text-primary">Purchase Bills</h3>
         <a href="{{ route('purchase_bills.create') }}" class="btn btn-success btn-sm shadow-sm">
-            <i class="bi bi-file-earmark-plus me-1"></i> Create A/P Invoice
+            <i class="bi bi-file-earmark-plus me-1"></i> View Branch Received
         </a>
+    </div>
+
+    {{-- KPI CARDS --}}
+    <div class="row mb-4">
+        @php
+            $draftCount = $bills->where('status','draft')->count();
+            $pendingCount = $bills->where('status','process')->count();
+            $overdueCount = $bills->where('status','overdue')->count();
+            $totalPayable = $bills->sum('balance');
+        @endphp
+
+        <div class="col-md-3 mb-2">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Draft Bills</h6>
+                    <h4 class="fw-bold text-warning">{{ $draftCount }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Pending Approval</h6>
+                    <h4 class="fw-bold text-primary">{{ $pendingCount }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Overdue</h6>
+                    <h4 class="fw-bold text-danger">{{ $overdueCount }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="card text-center shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Total Payable</h6>
+                    <h4 class="fw-bold text-success">₱{{ number_format($totalPayable,2) }}</h4>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- TABLE CARD --}}
@@ -18,12 +61,17 @@
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <span class="fw-semibold">All Purchase Bills</span>
 
-            {{-- SEARCH FORM --}}
-            <form action="{{ route('purchase_bills.index') }}" method="GET" class="d-flex" style="gap:0.5rem;">
+            {{-- SEARCH + FILTER --}}
+            <form action="{{ route('purchase_bills.index') }}" method="GET" class="d-flex flex-wrap align-items-center gap-2">
                 <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Search bills...">
-                <button class="btn btn-primary btn-sm" type="submit">
-                    <i class="bi bi-search"></i>
-                </button>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Status</option>
+                    <option value="draft" {{ request('status')=='draft' ? 'selected' : '' }}>Draft</option>
+                    <option value="pending" {{ request('status')=='pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="overdue" {{ request('status')=='overdue' ? 'selected' : '' }}>Overdue</option>
+                    <option value="paid" {{ request('status')=='paid' ? 'selected' : '' }}>Paid</option>
+                </select>
+                <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-search"></i></button>
             </form>
 
         </div>
@@ -57,13 +105,14 @@
                             <td class="text-end fw-semibold">{{ number_format($b->total_amount, 2) }}</td>
                             <td class="text-center">
                                 {{ $b->receipt->received_date ? intval($b->receipt->received_date->diffInDays(now())) . ' days' : 'N/A' }}
-                            </td>                                
+                            </td>
                             <td class="text-center">
                                 @php
                                     $statusColor = match($b->status) {
                                         'paid' => 'success',
                                         'pending' => 'warning text-dark',
                                         'overdue' => 'danger',
+                                        'draft' => 'secondary',
                                         default => 'secondary'
                                     };
                                 @endphp

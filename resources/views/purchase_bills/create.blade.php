@@ -39,7 +39,7 @@
     <div class="card shadow-sm">
         <div class="card-header bg-white">
             <h5 class="mb-0 fw-semibold">
-                Select Receipt to Create Purchase Bill
+                Create Purchase Bill
             </h5>
         </div>
 

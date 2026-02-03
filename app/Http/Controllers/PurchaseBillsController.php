@@ -11,7 +11,8 @@ use App\Models\Branch;
 
 class PurchaseBillsController extends Controller
 {
-    // Show all bills
+
+/*
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -34,6 +35,59 @@ class PurchaseBillsController extends Controller
             ->paginate(10);
 
         return view('purchase_bills.index', compact('bills'));
+    }
+*/
+    public function index(Request $request)
+    {
+        $search = $request->input('search');
+        $statusFilter = $request->input('status'); // for status dropdown
+        $from = $request->input('from');
+        $to = $request->input('to');
+
+        // --- SUMMARY COUNTS ---
+        $counts = [
+            'draft' => PurchaseBill::where('status', 'draft')->count(),
+            'submitted' => PurchaseBill::where('status', 'submitted')->count(),
+            'approved' => PurchaseBill::where('status', 'approved')->count(),
+            'overdue' => PurchaseBill::where('status', 'draft')
+                            ->where('due_date', '<', now())
+                            ->count(),
+        ];
+
+        // --- QUERY BILLS ---
+        $billsQuery = PurchaseBill::with(['receipt.purchaseOrder.supplier']);
+
+        // Apply filters
+        if($search) {
+            $billsQuery->where(function($q) use ($search) {
+                $q->where('bill_no', 'like', "%{$search}%")
+                ->orWhereHas('receipt', function($r) use ($search) {
+                    $r->where('receipt_no', 'like', "%{$search}%")
+                        ->orWhereHas('purchaseOrder', function($po) use ($search) {
+                            $po->where('po_number', 'like', "%{$search}%")
+                            ->orWhereHas('supplier', function($s) use ($search) {
+                                $s->where('name', 'like', "%{$search}%");
+                            });
+                        });
+                });
+            });
+        }
+
+        if($statusFilter) {
+            $billsQuery->where('status', $statusFilter);
+        }
+
+        if($from) {
+            $billsQuery->whereDate('bill_date', '>=', $from);
+        }
+
+        if($to) {
+            $billsQuery->whereDate('bill_date', '<=', $to);
+        }
+
+        $bills = $billsQuery->orderBy('bill_date', 'desc')->paginate(10);
+
+        return view('purchase_bills.index', compact('bills', 'counts'));
     }
 
 
@@ -73,6 +127,7 @@ class PurchaseBillsController extends Controller
         return view('purchase_bills.create', compact('receipts'));
     }
 
+    
 
 
     // app/Http/Controllers/PurchaseBillsController.php
@@ -132,7 +187,13 @@ class PurchaseBillsController extends Controller
         $grandTotal -= $withholdingAmount;
         }
 
+        
+
         $terms = $receipt->purchaseOrder->supplier->payment_terms ?? null;
+
+  
+
+
         $dueDate = now()->addDays(30); // fallback
         if($terms) {
             preg_match('/\d+/', $terms, $matches);
@@ -147,6 +208,7 @@ class PurchaseBillsController extends Controller
         'bill_no' => $billNo,
         'bill_date' => now()->toDateString(),
         'due_date' => $dueDate->toDateString(),
+        'goods_received_date' => $receipt->received_date->toDateString(),
         'branch' => $receipt->branch,
         'remarks' => $receipt->remarks,
         'status' => 'draft',
@@ -155,6 +217,8 @@ class PurchaseBillsController extends Controller
         'tax_type' => $taxType,
         'vat_amount' => $vatAmount,
         'withholding_amount'=> $withholdingAmount,
+        'payment_terms' => $terms,
+        'created_by' => auth()->user()->name,
         ]);
 
 

@@ -34,7 +34,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/purchase_receipts/{id}', [App\Http\Controllers\PurchaseReceiptsController::class, 'show'])->name('purchase_receipts.show');
 });
 
-// Purchase Bills
+// Purchase Bills - A/P
 Route::middleware(['auth'])->prefix('purchase_bills')->group(function() {
     Route::get('/create', [PurchaseBillsController::class,'create'])->name('purchase_bills.create');
     Route::get('/from-receipt/{receipt}', [PurchaseBillsController::class,'createFromReceipt'])->name('purchase_bills.createFromReceipt');
@@ -43,11 +43,14 @@ Route::middleware(['auth'])->prefix('purchase_bills')->group(function() {
     Route::get('/view/{bill}', [PurchaseBillsController::class, 'show'])->name('purchase_bills.show');
     Route::get('/showpb/{id}', [PurchaseBillsController::class, 'showpb'])->name('purchase_bills.showpb');
     Route::post('/approve/{bill}', [BillApprovalController::class, 'approve'])->name('bill_approval.approve');
+    Route::post('/process/{bill}', [BillApprovalController::class, 'process'])->name('bill_approval.process');
+
+    
 
     Route::get('/datatable', [PurchaseBillsController::class, 'datatable'])->name('purchase_bills.datatable');
 });
 
-// Pay Bills / A/P
+// Pay Bills 
 
 Route::middleware(['auth'])->prefix('pay_bills')->group(function () {
 

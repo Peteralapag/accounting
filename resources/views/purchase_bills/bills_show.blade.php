@@ -198,12 +198,24 @@
 
 
     <!-- Approval Button -->
-    @if($bill->approval_status == 'pending')
-    <div class="d-flex justify-content-end mb-4">
-        <form action="{{ route('bill_approval.approve', $bill->id) }}" method="POST">
+    @if($bill->approval_status == 'pending' && $bill->status == 'draft')
+    <div class="d-flex justify-content-end mb-4 mt-4">
+
+        <form id="processApForm" action="{{ route('bill_approval.process', $bill->id) }}" method="POST">
             @csrf
             <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm">
-                <i class="bi bi-check-circle me-1"></i> Approve
+                <i class="bi bi-gear"></i> Process A/P
+            </button>
+        </form>
+
+    </div>
+    @endif
+    @if($bill->approval_status == 'pending' && $bill->status == 'process')
+    <div class="d-flex justify-content-end mb-4 mt-4">
+        <form id="approveApForm" action="{{ route('bill_approval.approve', $bill->id) }}" method="POST">
+            @csrf
+            <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm">
+                <i class="bi bi-check-circle me-1"></i> Approve A/P
             </button>
         </form>
     </div>
@@ -211,3 +223,124 @@
 
 </div>
 @endsection
+
+
+@push('scripts')
+<script src="{{ asset('assets/js/sweetalert2.min.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Process A/P
+    const processForm = document.getElementById('processApForm');
+    if (processForm) {
+        processForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Process Accounts Payable?',
+                text: 'This bill will be sent to A/P approval.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, process it',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#198754'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData(processForm);
+                    fetch(processForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': formData.get('_token'),
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(async res => {
+                        if (!res.ok) {
+                            const text = await res.text();
+                            throw new Error(text || 'Server error');
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if(data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Processed!',
+                                text: data.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = "{{ route('purchase_bills.index') }}";
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'Something went wrong!', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'Something went wrong!', 'error');
+                    });
+                }
+            });
+        });
+    }
+
+    // Approve
+    const approveForm = document.getElementById('approveApForm');
+    if (approveForm) {
+        approveForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Approve this bill?',
+                text: 'This action will mark the bill as approved.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, approve it',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#198754'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData(approveForm);
+                    fetch(approveForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': formData.get('_token'),
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(async res => {
+                        if (!res.ok) {
+                            const text = await res.text();
+                            throw new Error(text || 'Server error');
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if(data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Approved!',
+                                text: data.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = "{{ route('purchase_bills.index') }}";
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'Something went wrong!', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'Something went wrong!', 'error');
+                    });
+                }
+            });
+        });
+    }
+
+});
+</script>
+@endpush

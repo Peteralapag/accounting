@@ -14,6 +14,7 @@ class PurchaseBill extends Model
         'bill_no',
         'bill_date',
         'due_date',
+        'goods_received_date',
         'balance',
         'branch',
         'remarks',
@@ -22,10 +23,12 @@ class PurchaseBill extends Model
         'total_amount',
         'vat_amount',
         'withholding_amount',
+        'payment_terms',
         'approval_status',
         'approved_at',
         'approved_by',
-        // New columns can be added here if any in future without breaking old code
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

@@ -53,7 +53,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold text-primary">Receipt Details</h3>
         <a href="{{ route('purchase_bills.create') }}" class="btn btn-outline-primary btn-sm shadow-sm">
-            <i class="bi bi-arrow-left me-1"></i> Back to Receipts
+            <i class="bi bi-arrow-left me-1"></i> Back to Branch Received
         </a>
     </div>
 
@@ -245,10 +245,59 @@
             @csrf
             <input type="hidden" name="receipt_id" value="{{ $receipt->id }}">
             <button class="btn btn-success btn-sm fw-bold shadow-sm">
-                <i class="bi bi-file-earmark-plus me-2"></i> Create Bill
+                <i class="bi bi-file-earmark-plus me-2"></i> Push to A/P
             </button>
         </form>
     </div>
 
 </div>
 @endsection
+
+
+@push('scripts')
+<script src="{{ asset('assets/js/sweetalert2.min.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('create-bill-form');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); // prevent default submit
+
+        Swal.fire({
+            title: 'Confirm Push to A/P?',
+            text: "This will create a draft purchase bill.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, push it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit(); // submit if confirmed
+            }
+        });
+    });
+
+    // SUCCESS ALERT AFTER REDIRECT
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: "{{ session('success') }}",
+            confirmButtonColor: '#28a745'
+        });
+    @endif
+
+    // ERROR ALERT AFTER REDIRECT
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops!',
+            text: "{{ session('error') }}",
+            confirmButtonColor: '#dc3545'
+        });
+    @endif
+});
+</script>
+@endpush

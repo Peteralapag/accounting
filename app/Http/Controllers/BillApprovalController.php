@@ -8,11 +8,13 @@ use Illuminate\Support\Facades\Auth;
 
 class BillApprovalController extends Controller
 {
-   
     public function approve(PurchaseBill $bill)
     {
-        if ($bill->approval_status != 'pending') {
-            return back()->with('error', 'This bill cannot be approved.');
+        if ($bill->status != 'process') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This bill cannot be approved.'
+            ]);
         }
 
         $bill->update([
@@ -22,9 +24,22 @@ class BillApprovalController extends Controller
             'approved_by' => auth()->user()->name,
         ]);
 
-        return back()->with('success', 'Bill approved successfully.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully Approved.'
+        ]);
     }
 
 
 
+    public function process(Request $request, PurchaseBill $bill)
+    {
+        $bill->status = 'process';
+        $bill->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully sent to A/P approval.'
+        ]);
+    }
 }
